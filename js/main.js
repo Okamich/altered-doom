@@ -1,171 +1,296 @@
-// --- Инициализация Игрового Состояния ---
-const gameState = {
-    player: {
-        health: 100,
-        maxHealth: 100,
-        hunger: 0, // 0 = не голоден, 100 = умирает от голода
-        maxHunger: 100,
-        thirst: 0, // 0 = не хочет пить, 100 = умирает от жажды
-        maxThirst: 100,
-        fatigue: 0, // 0 = бодр, 100 = истощен
-        maxFatigue: 100,
-        // Можно добавить другие характеристики позже
-    },
-    inventory: {
-        "Питательная паста": 3,
-        "Гидрогель": 3,
-        "Нож": 1,
-        "Пистолет 9мм": 1,
-        "Патроны 9мм": 18 // 2 обоймы по 9
-    },
-    world: {
-        // Пока пусто, но сюда можно добавить информацию о локации
-    },
-    // Флаги для отслеживания прогресса
-    flags: {
-        introCompleted: true // Предположим, интро уже прошло
-        // introCompleted: false // Если захотите реализовать интро позже
-    }
-};
+// --- Система Событий ---
 
-// --- Функции Обновления UI ---
-function updateUI() {
-    // Обновление статус-баров
-    const healthPercent = (gameState.player.health / gameState.player.maxHealth) * 100;
-    document.getElementById('health-value').textContent = Math.round(healthPercent);
-    document.getElementById('health-bar').style.width = healthPercent + '%';
+// Функция для отображения события в UI
+function displayEvent(event) {
+    const descriptionElement = document.getElementById('description-text');
+    const actionsSection = document.querySelector('.actions-section');
 
-    const hungerPercent = (gameState.player.hunger / gameState.player.maxHunger) * 100;
-    document.getElementById('hunger-value').textContent = Math.round(hungerPercent);
-    document.getElementById('hunger-bar').style.width = hungerPercent + '%';
+    // Очищаем описание и действия
+    descriptionElement.innerHTML = `<strong>${event.title || "Событие"}:</strong><br>${event.text}`;
+    actionsSection.innerHTML = '<h2>Выбор:</h2>'; // Очищаем старые кнопки действий
 
-    const thirstPercent = (gameState.player.thirst / gameState.player.maxThirst) * 100;
-    document.getElementById('thirst-value').textContent = Math.round(thirstPercent);
-    document.getElementById('thirst-bar').style.width = thirstPercent + '%';
+    // Создаем кнопки для каждого выбора
+    event.choices.forEach(choice => {
+        const button = document.createElement('button');
+        button.textContent = choice.text;
+        button.addEventListener('click', () => {
+            // Выполняем действие выбора
+            if (choice.action) {
+                choice.action(gameState);
+            }
+            // После выбора обновляем UI и возвращаем обычные действия
+            updateUI();
+            // Возвращаем стандартное описание (можно улучшить)
+            descriptionElement.textContent = "Вы очнулись в спасательной капсуле после крушения корабля. Вокруг пусто, но вы чувствуете, что не один. Нужно выжить и найти способ подать сигнал о помощи.";
+            // Возвращаем стандартные кнопки действий (временно просто пересоздаем explore)
+            actionsSection.innerHTML = `
+                <h2>Действия:</h2>
+                <button id="rest-btn">Отдыхать</button>
+                <button id="explore-btn">Исследовать</button>
+            `;
+            // Переопределяем обработчики (важно!)
+            document.getElementById('rest-btn').addEventListener('click', rest);
+            document.getElementById('explore-btn').addEventListener('click', explore);
+        });
+        actionsSection.appendChild(button);
+    });
+}
 
-    const fatiguePercent = (gameState.player.fatigue / gameState.player.maxFatigue) * 100;
-    document.getElementById('fatigue-value').textContent = Math.round(fatiguePercent);
-    document.getElementById('fatigue-bar').style.width = fatiguePercent + '%';
+// Функция для запуска случайного события
+function triggerRandomEvent() {
+    // База данных событий
+    const events = [
+        {
+            id: 'find_plant',
+            title: 'Находка',
+            text: 'Вы наткнулись на странный кустарник с сочными на вид плодами.',
+            choices: [
+                {
+                    text: 'Собрать плоды',
+                    action: (state) => {
+                        const amount = Math.floor(Math.random() * 3) + 1; // 1-3
+                        if (!state.inventory['Плоды кустарника']) state.inventory['Плоды кустарника'] = 0;
+                        state.inventory['Плоды кустарника'] += amount;
+                        addToLog(`Вы собрали ${amount} плодов кустарника.`);
+                        // Плоды могут быть опасны или полезны - добавим немного риска
+                        if (Math.random() > 0.7) { // 30% шанс отравления
+                             const damage = Math.floor(Math.random() * 10) + 5;
+                             state.player.health = Math.max(0, state.player.health - damage);
+                             addToLog(`Плоды оказались ядовитыми! Вы потеряли ${damage} здоровья.`);
+                        }
+                    }
+                },
+                {
+                    text: 'Осмотреть и уйти',
+                    action: (state) => {
+                        addToLog('Вы осторожно осмотрели кустарник, но решили не рисковать и пошли дальше.');
+                    }
+                }
+            ],
+            trigger: (state) => true, // Может произойти всегда
+            weight: 10
+        },
+        {
+            id: 'encounter_creature_passive',
+            title: 'Встреча',
+            text: 'Из-за утеса выползает странное существо. Оно похоже на ящерицу, но с хитиновым панцирем и большими глазами. Оно смотрит на вас, не проявляя агрессии.',
+            choices: [
+                {
+                    text: 'Попытаться приручить',
+                    action: (state) => {
+                        // Очень простая логика приручения
+                        if (state.inventory['Плоды кустарника'] && state.inventory['Плоды кустарника'] > 0) {
+                            if (Math.random() > 0.5) {
+                                addToLog('Вы протягиваете плоды существу. Оно берет их и, похоже, начинает вам доверять. У вас появился питомец!');
+                                state.inventory['Плоды кустарника'] -= 1;
+                                if (!state.inventory['Питомец (Ящерица)']) state.inventory['Питомец (Ящерица)'] = 0;
+                                state.inventory['Питомец (Ящерица)'] += 1;
+                                 // Можно добавить бонусы от питомца позже
+                            } else {
+                                addToLog('Существо с любопытством смотрит на вас, но затем уползает прочь.');
+                                state.inventory['Плоды кустарника'] -= 1;
+                            }
+                        } else {
+                             if (Math.random() > 0.7) { // Меньше шанс без еды
+                                addToLog('Вы машете руками и издаете успокаивающие звуки. Существо, казалось, понимает вашу доброжелательность и уходит, оставляя после себя немного странного слизистого вещества.');
+                                if (!state.inventory['Слизь']) state.inventory['Слизь'] = 0;
+                                state.inventory['Слизь'] += 1;
+                             } else {
+                                addToLog('Существо испугалось ваших движений и быстро скрылось.');
+                             }
+                        }
+                    }
+                },
+                {
+                    text: 'Атаковать',
+                    action: (state) => {
+                        // Проверим, есть ли оружие
+                        const hasGun = state.inventory['Пистолет 9мм'] && state.inventory['Патроны 9мм'] > 0;
+                        const hasMelee = state.inventory['Нож'];
 
-    // Обновление инвентаря
-    const inventoryList = document.getElementById('inventory-list');
-    inventoryList.innerHTML = ''; // Очищаем список
-    for (const [itemName, quantity] of Object.entries(gameState.inventory)) {
-        if (quantity > 0) { // Показываем только предметы в наличии
-             const listItem = document.createElement('li');
-             listItem.textContent = `${itemName} (x${quantity})`;
-             inventoryList.appendChild(listItem);
+                        if (hasGun) {
+                            state.inventory['Патроны 9мм'] -= 1;
+                            addToLog('Вы достали пистолет и выстрелили. Существо погибло. Вы получили немного мяса.');
+                            if (!state.inventory['Мясо местное']) state.inventory['Мясо местное'] = 0;
+                            state.inventory['Мясо местное'] += 2;
+                        } else if (hasMelee) {
+                            // Ближний бой с риском
+                            if (Math.random() > 0.3) { // 70% шанс победы
+                                addToLog('Вы схватили нож и напали. После короткой схватки существо повержено. Вы получили немного мяса.');
+                                if (!state.inventory['Мясо местное']) state.inventory['Мясо местное'] = 0;
+                                state.inventory['Мясо местное'] += 1;
+                            } else {
+                                const damage = Math.floor(Math.random() * 15) + 5;
+                                state.player.health = Math.max(0, state.player.health - damage);
+                                addToLog(`Существо оказалось проворным и укусило вас! Вы потеряли ${damage} здоровья.`);
+                            }
+                        } else {
+                            // Рукопашная без оружия - высокий риск
+                            if (Math.random() > 0.8) { // 20% шанс победы
+                                addToLog('Вы бросились на существо голыми руками. Это было рискованно, но вам удалось одолеть его. Вы получили немного мяса.');
+                                if (!state.inventory['Мясо местное']) state.inventory['Мясо местное'] = 0;
+                                state.inventory['Мясо местное'] += 1;
+                            } else {
+                                const damage = Math.floor(Math.random() * 20) + 10;
+                                state.player.health = Math.max(0, state.player.health - damage);
+                                addToLog(`Существо оказалось сильнее! Вы получили серьезные увечья. Потеряно ${damage} здоровья.`);
+                            }
+                        }
+                    }
+                },
+                {
+                    text: 'Наблюдать издалека',
+                    action: (state) => {
+                        addToLog('Вы остаетесь неподвижно, наблюдая за существом. Оно через некоторое время теряет к вам интерес и уползает.');
+                    }
+                }
+            ],
+            trigger: (state) => true, // Может произойти всегда
+            weight: 8
+        },
+        {
+            id: 'find_scrap',
+            title: 'Находка',
+            text: 'Вы наткнулись на обломок вашего корабля. Среди обломков можно найти что-нибудь полезное.',
+            choices: [
+                {
+                    text: 'Обыскать обломки',
+                    action: (state) => {
+                        const outcomes = [
+                            {item: "Металлолом", amount: 2, message: "Вы нашли приличное количество металлолома."},
+                            {item: "Энергоячейка", amount: 1, message: "Среди проводов вы обнаружили целую энергоячейку!"},
+                            {item: "Поврежденный коммуникатор", amount: 1, message: "Вы нашли коммуникатор, но он серьезно поврежден."},
+                            {item: null, amount: 0, message: "Обломки оказались почти бесполезны. Вы устали зря."}, // Ничего не найдено
+                            {item: "Металлолом", amount: 1, message: "Вы нашли немного металлолома и немного пыли.", fatigue: 5}, // С усталостью
+                        ];
+
+                        const outcome = outcomes[Math.floor(Math.random() * outcomes.length)];
+                        if (outcome.item) {
+                            if (!state.inventory[outcome.item]) state.inventory[outcome.item] = 0;
+                            state.inventory[outcome.item] += outcome.amount;
+                            addToLog(outcome.message);
+                        } else {
+                            addToLog(outcome.message);
+                        }
+                        if (outcome.fatigue) {
+                            state.player.fatigue = Math.min(state.player.maxFatigue, state.player.fatigue + outcome.fatigue);
+                            addToLog(`Усталость +${outcome.fatigue}`);
+                        }
+                    }
+                },
+                {
+                    text: 'Уйти прочь',
+                    action: (state) => {
+                        addToLog('Обломки корабля вызывают тяжелые воспоминания. Вы решаете не рисковать и идете в обход.');
+                    }
+                }
+            ],
+            trigger: (state) => true, // Может произойти всегда
+            weight: 7
+        },
+        {
+            id: 'encounter_creature_aggressive',
+            title: 'Нападение!',
+            text: 'Из кустов внезапно выпрыгивает агрессивное существо! Оно рычит и бросается на вас!',
+            choices: [
+                {
+                    text: 'Сражаться',
+                    action: (state) => {
+                         // Логика почти такая же, как в passive, но без варианта "приручить"
+                         const hasGun = state.inventory['Пистолет 9мм'] && state.inventory['Патроны 9мм'] > 0;
+                         const hasMelee = state.inventory['Нож'];
+
+                         if (hasGun) {
+                             state.inventory['Патроны 9мм'] -= 1;
+                             addToLog('Вы достали пистолет и выстрелили. Существо погибло.');
+                             if (!state.inventory['Мясо местное']) state.inventory['Мясо местное'] = 0;
+                             state.inventory['Мясо местное'] += 2;
+                         } else if (hasMelee) {
+                             if (Math.random() > 0.4) { // 60% шанс победы в ближнем бою
+                                 addToLog('Вы схватили нож. После жестокой схватки существо повержено.');
+                                 if (!state.inventory['Мясо местное']) state.inventory['Мясо местное'] = 0;
+                                 state.inventory['Мясо местное'] += 1;
+                             } else {
+                                 const damage = Math.floor(Math.random() * 20) + 10;
+                                 state.player.health = Math.max(0, state.player.health - damage);
+                                 addToLog(`Существо ранило вас! Потеряно ${damage} здоровья.`);
+                             }
+                         } else {
+                             if (Math.random() > 0.9) { // 10% шанс победы без оружия
+                                 addToLog('Несмотря на отсутствие оружия, вам удалось одолеть существо в рукопашной.');
+                                 if (!state.inventory['Мясо местное']) state.inventory['Мясо местное'] = 0;
+                                 state.inventory['Мясо местное'] += 1;
+                             } else {
+                                 const damage = Math.floor(Math.random() * 25) + 15;
+                                 state.player.health = Math.max(0, state.player.health - damage);
+                                 addToLog(`Существо свирепо атакует! Вы получили тяжелые раны. Потеряно ${damage} здоровья.`);
+                             }
+                         }
+                    }
+                },
+                {
+                    text: 'Бежать',
+                    action: (state) => {
+                        if (Math.random() > 0.3) { // 70% шанс убежать
+                            addToLog('Вы развернулись и бросились бежать. Существо преследовало вас недолго и отстало.');
+                            // Может быть небольшая усталость или стресс
+                            state.player.fatigue = Math.min(state.player.maxFatigue, state.player.fatigue + 5);
+                        } else {
+                            const damage = Math.floor(Math.random() * 15) + 5;
+                            state.player.health = Math.max(0, state.player.health - damage);
+                            addToLog(`Вам не удалось убежать! Существо догнало вас и нанесло урон. Потеряно ${damage} здоровья.`);
+                        }
+                    }
+                }
+            ],
+            trigger: (state) => true, // Может произойти всегда
+            weight: 5 // Менее вероятно, чем пассивная встреча
         }
-    }
-
-    // Описание/События - пока статичное, позже будет динамическим
-    // document.getElementById('description-text').textContent = "Текущая ситуация...";
-
-    // Лог - можно добавлять сообщения сюда
-}
-
-function addToLog(message) {
-    const logDiv = document.getElementById('game-log');
-    const messageElement = document.createElement('div');
-    messageElement.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-    logDiv.appendChild(messageElement);
-    logDiv.scrollTop = logDiv.scrollHeight; // Автопрокрутка вниз
-}
-
-// --- Игровая Логика (Действия) ---
-
-function rest() {
-    // Простое действие: восстановление здоровья за счет увеличения усталости и голода/жажды
-    if (gameState.player.health >= gameState.player.maxHealth) {
-        addToLog("Вы уже полностью здоровы.");
-        return;
-    }
-
-    const healAmount = 10;
-    const fatigueIncrease = 5;
-    const hungerIncrease = 2;
-    const thirstIncrease = 3;
-
-    gameState.player.health = Math.min(gameState.player.maxHealth, gameState.player.health + healAmount);
-    gameState.player.fatigue = Math.min(gameState.player.maxFatigue, gameState.player.fatigue + fatigueIncrease);
-    gameState.player.hunger = Math.min(gameState.player.maxHunger, gameState.player.hunger + hungerIncrease);
-    gameState.player.thirst = Math.min(gameState.player.maxThirst, gameState.player.thirst + thirstIncrease);
-
-    addToLog(`Вы отдохнули. Здоровье +${healAmount}, Усталость +${fatigueIncrease}, Голод +${hungerIncrease}, Жажда +${thirstIncrease}.`);
-    updateUI(); // Обновляем UI после действия
-}
-
-function explore() {
-    // Простое действие: исследование с шансом найти что-то или получить урон
-    const outcomes = [
-        { text: "Вы обыскали окрестности, но ничего не нашли.", items: {}, healthChange: 0, hungerChange: 5, thirstChange: 5, fatigueChange: 10 },
-        { text: "Вы нашли немного растений. Возможно, их можно использовать.", items: {"Растения": 2}, healthChange: 0, hungerChange: 3, thirstChange: 3, fatigueChange: 8 },
-        { text: "Вы поскользнулись и упали, получив царапину.", items: {}, healthChange: -5, hungerChange: 2, thirstChange: 2, fatigueChange: 5 },
-        { text: "Вы услышали странный звук вдалеке. Лучше быть начеку.", items: {}, healthChange: 0, hungerChange: 4, thirstChange: 4, fatigueChange: 6 },
+        // --- Сюжетные события ---
+        // {
+        //     id: 'intro_wake_up',
+        //     title: 'Пробуждение',
+        //     text: 'Вы очнулись в спасательной капсуле после крушения корабля. Вокруг пусто, но вы чувствуете, что не один. Нужно выalive и найти способ подать сигнал о помощи.',
+        //     choices: [
+        //         { text: 'Осмотреть капсулу', action: (state) => { addToLog("Вы осмотрели капсулу. Все системы работают, но ресурсов немного."); } },
+        //         { text: 'Выйти наружу', action: (state) => { addToLog("Вы открыли шлюз и вышли из капсулы. Вокруг неизвестная планета."); state.flags.introCompleted = true; } }
+        //     ],
+        //     trigger: (state) => !state.flags.introCompleted,
+        //     weight: 1000 // Очень высокий вес, чтобы точно сработало первым
+        // }
     ];
 
-    const outcome = outcomes[Math.floor(Math.random() * outcomes.length)];
+    // Фильтруем события по триггерам
+    const availableEvents = events.filter(event => event.trigger(gameState));
 
-    // Применяем изменения
-    gameState.player.health = Math.max(0, Math.min(gameState.player.maxHealth, gameState.player.health + outcome.healthChange));
-    gameState.player.hunger = Math.min(gameState.player.maxHunger, gameState.player.hunger + outcome.hungerChange);
-    gameState.player.thirst = Math.min(gameState.player.maxThirst, gameState.player.thirst + outcome.thirstChange);
-    gameState.player.fatigue = Math.min(gameState.player.maxFatigue, gameState.player.fatigue + outcome.fatigueChange);
+    if (availableEvents.length === 0) {
+        console.log("Нет доступных событий для запуска.");
+        return; // Нет событий для запуска
+    }
 
-    // Добавляем предметы в инвентарь
-    for (const [itemName, quantity] of Object.entries(outcome.items)) {
-        if (gameState.inventory[itemName]) {
-            gameState.inventory[itemName] += quantity;
-        } else {
-            gameState.inventory[itemName] = quantity;
+    // Выбор события с учетом веса (Weighted Random Selection)
+    let totalWeight = availableEvents.reduce((sum, event) => sum + event.weight, 0);
+    let random = Math.random() * totalWeight;
+    let currentWeight = 0;
+    let selectedEvent = null;
+
+    for (let event of availableEvents) {
+        currentWeight += event.weight;
+        if (random <= currentWeight) {
+            selectedEvent = event;
+            break;
         }
     }
 
-    addToLog(outcome.text);
-    if (Object.keys(outcome.items).length > 0) {
-        addToLog(`Найдено: ${Object.entries(outcome.items).map(([name, qty]) => `${name} x${qty}`).join(', ')}`);
-    }
-    if (outcome.healthChange !== 0) addToLog(`Здоровье: ${outcome.healthChange > 0 ? '+' : ''}${outcome.healthChange}`);
-    updateUI();
-}
-
-
-// --- Игровой Цикл ---
-let gameInterval;
-
-function gameLoop() {
-    // Здесь будет логика пассивного течения времени
-    // Например, увеличение голода, жажды, усталости
-    gameState.player.hunger = Math.min(gameState.player.maxHunger, gameState.player.hunger + 0.5); // Голод растет медленно
-    gameState.player.thirst = Math.min(gameState.player.maxThirst, gameState.player.thirst + 0.7); // Жажда растет немного быстрее
-    gameState.player.fatigue = Math.min(gameState.player.maxFatigue, gameState.player.fatigue + 0.3); // Усталость растет медленно
-
-    // Проверка на смерть (упрощенная)
-    if (gameState.player.hunger >= gameState.player.maxHunger || gameState.player.thirst >= gameState.player.maxThirst || gameState.player.health <= 0) {
-         gameState.player.health = 0; // Убедимся, что здоровье 0
-         updateUI();
-         addToLog("=== ВЫ УМЕРЛИ ===");
-         clearInterval(gameInterval); // Останавливаем игру
-         // Можно добавить кнопку "Начать заново"
-         document.getElementById('rest-btn').disabled = true;
-         document.getElementById('explore-btn').disabled = true;
-         return;
+    // Если по какой-то причине событие не выбрано (например, все веса 0), берем первое попавшееся
+    if (!selectedEvent) {
+        selectedEvent = availableEvents[0];
+        console.warn("Не удалось выбрать событие по весу, выбрано первое доступное:", selectedEvent.id);
     }
 
-
-    updateUI(); // Обновляем UI на каждом тике
+    // Отображаем выбранное событие
+    if (selectedEvent) {
+        console.log("Запуск события:", selectedEvent.id);
+        displayEvent(selectedEvent);
+    }
 }
-
-// --- Инициализация и Запуск ---
-document.addEventListener('DOMContentLoaded', () => {
-    // Привязываем обработчики событий к кнопкам
-    document.getElementById('rest-btn').addEventListener('click', rest);
-    document.getElementById('explore-btn').addEventListener('click', explore);
-
-    // Инициализируем UI
-    updateUI();
-    addToLog("Спасательная капсула приземлилась. Вы один. Нужно выжить.");
-
-    // Запускаем игровой цикл (например, обновление раз в 5 секунд)
-    gameInterval = setInterval(gameLoop, 5000); // 5000 мс = 5 секунд
-});
