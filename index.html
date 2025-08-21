@@ -1,1 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alteret Doom - Incremental</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <h1>Alteret Doom - Выживание</h1>
 
+        <!-- Статус-бары -->
+        <div class="status-section">
+            <h2>Состояние:</h2>
+            <div>
+                <label>Здоровье: </label>
+                <span id="health-value">100</span>%
+                <div class="status-bar">
+                    <div id="health-bar" class="bar health-bar" style="width: 100%;"></div>
+                </div>
+            </div>
+            <div>
+                <label>Голод: </label>
+                <span id="hunger-value">0</span>%
+                <div class="status-bar">
+                    <div id="hunger-bar" class="bar hunger-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+            <div>
+                <label>Жажда: </label>
+                <span id="thirst-value">0</span>%
+                <div class="status-bar">
+                    <div id="thirst-bar" class="bar thirst-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+             <div>
+                <label>Усталость: </label>
+                <span id="fatigue-value">0</span>%
+                <div class="status-bar">
+                    <div id="fatigue-bar" class="bar fatigue-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Инвентарь -->
+        <div class="inventory-section">
+            <h2>Инвентарь:</h2>
+            <ul id="inventory-list">
+                <!-- Предметы будут добавлены сюда скриптом -->
+            </ul>
+        </div>
+
+        <!-- Описание/События -->
+        <div class="description-section">
+            <h2>Ситуация:</h2>
+            <p id="description-text">Вы очнулись в спасательной капсуле после крушения корабля. Вокруг пусто, но вы чувствуете, что не один. Нужно выжить и найти способ подать сигнал о помощи.</p>
+        </div>
+
+        <!-- Действия -->
+        <div class="actions-section">
+            <h2>Действия:</h2>
+            <button id="rest-btn">Отдыхать</button>
+            <button id="explore-btn">Исследовать</button>
+            <!-- Другие кнопки действий будут добавлены позже -->
+        </div>
+
+        <!-- Сообщения/Лог -->
+        <div class="log-section">
+            <h2>Лог:</h2>
+            <div id="game-log"></div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
