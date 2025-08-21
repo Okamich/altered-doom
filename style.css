@@ -1,1 +1,80 @@
+body {
+    font-family: 'Courier New', Courier, monospace;
+    background-color: #111;
+    color: #0f0; /* Зеленый текст для стилизации под терминал */
+    margin: 0;
+    padding: 20px;
+}
 
+#game-container {
+    max-width: 800px;
+    margin: 0 auto;
+    border: 1px solid #0f0;
+    padding: 20px;
+    background-color: #000;
+}
+
+h1, h2 {
+    color: #0f0;
+    border-bottom: 1px solid #0f0;
+    padding-bottom: 5px;
+}
+
+/* Статус-бары */
+.status-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #333;
+    border: 1px solid #0f0;
+    margin-top: 5px;
+    overflow: hidden;
+}
+
+.bar {
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+}
+
+.health-bar { background-color: #f33; } /* Красный */
+.hunger-bar { background-color: #ff0; } /* Желтый */
+.thirst-bar { background-color: #00f; } /* Синий */
+.fatigue-bar { background-color: #888; } /* Серый */
+
+/* Инвентарь */
+.inventory-section ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.inventory-section li {
+    background-color: #222;
+    margin: 5px 0;
+    padding: 5px;
+    border: 1px solid #0f0;
+}
+
+/* Кнопки действий */
+.actions-section button {
+    background-color: #002200;
+    color: #0f0;
+    border: 1px solid #0f0;
+    padding: 10px 15px;
+    margin: 5px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1em;
+}
+
+.actions-section button:hover {
+    background-color: #004400;
+}
+
+/* Лог */
+.log-section {
+    height: 150px;
+    overflow-y: auto;
+    border: 1px solid #0f0;
+    padding: 10px;
+    background-color: #001100;
+    margin-top: 20px;
+}
