@@ -23,7 +23,16 @@ const gameState = {
         // Пока пусто
     },
     flags: {
-        introCompleted: true // Предположим, интро уже прошло
+        introCompleted: true, // Предположим, интро уже прошло
+        // --- Флаги для стартового квеста ---
+        quest_started: false, // Начался ли квест
+        quest_food_found: false, // Найдена еда
+        quest_medicine_found: false, // Найдены лекарства
+        quest_shelter_found: false, // Найдено убежище
+        quest_crash_site_found: false, // Найден обломок корабля
+        quest_base_established: false, // База создана
+        // --- Общие флаги ---
+        has_shelter: false, // Есть ли у игрока убежище
     }
 };
 
@@ -60,7 +69,62 @@ function updateUI() {
              inventoryList.appendChild(listItem);
         }
     }
+    
+    // Обновление описания квеста (если квест активен)
+    updateQuestDescription();
 }
+
+function updateQuestDescription() {
+    const descriptionDiv = document.getElementById('description-text');
+    let questDescription = "<p>Вы очнулись в спасательной капсуле после крушения корабля. Вокруг пусто, но вы чувствуете, что не один. Нужно выжить и найти способ подать сигнал о помощи.</p>";
+    
+    if (gameState.flags.quest_started && !gameState.flags.quest_base_established) {
+        questDescription = "<p><strong>Стартовый квест: Выживание</strong></p><ul>";
+        
+        if (!gameState.flags.quest_food_found) {
+            questDescription += "<li>☐ Найти еду</li>";
+        } else {
+            questDescription += "<li>✓ Найти еду</li>";
+        }
+        
+        if (!gameState.flags.quest_medicine_found) {
+            questDescription += "<li>☐ Найти лекарства</li>";
+        } else {
+            questDescription += "<li>✓ Найти лекарства</li>";
+        }
+        
+        if (!gameState.flags.quest_shelter_found) {
+            questDescription += "<li>☐ Найти убежище</li>";
+        } else {
+            questDescription += "<li>✓ Найти убежище</li>";
+        }
+        
+        if (!gameState.flags.quest_crash_site_found) {
+            questDescription += "<li>☐ Найти обломки корабля</li>";
+        } else {
+            questDescription += "<li>✓ Найти обломки корабля</li>";
+        }
+        
+        questDescription += "</ul>";
+        
+        if (gameState.flags.quest_food_found && 
+            gameState.flags.quest_medicine_found && 
+            gameState.flags.quest_shelter_found && 
+            gameState.flags.quest_crash_site_found) {
+            questDescription += "<p><em>Вы выполнили все задачи! Теперь вы можете превратить обломки корабля в свою базу.</em></p>";
+        }
+    }
+    
+    if (gameState.flags.quest_base_established) {
+        questDescription = "<p><strong>База создана!</strong></p><p>Вы превратили обломки корабля в свою базу. Теперь у вас есть безопасное место для отдыха и хранения ресурсов.</p>";
+    }
+    
+    // Обновляем только если описание квеста отличается от текущего
+    if (descriptionDiv.innerHTML !== questDescription) {
+        descriptionDiv.innerHTML = questDescription;
+    }
+}
+
 
 function addToLog(message, isEventMessage = false) {
     const logDiv = document.getElementById('game-log');
@@ -99,13 +163,11 @@ function showEvent(eventData) {
 
 function hideEvent() {
     currentEvent = null;
-    const descriptionDiv = document.getElementById('description-text');
-    const actionsDiv = document.querySelector('.actions-section');
-
-    // Восстанавливаем стандартное описание
-    descriptionDiv.innerHTML = '<p>Вы очнулись в спасательной капсуле после крушения корабля. Вокруг пусто, но вы чувствуете, что не один. Нужно выжить и найти способ подать сигнал о помощи.</p>';
-
+    // Восстанавливаем описание квеста
+    updateQuestDescription();
+    
     // Восстанавливаем стандартные кнопки действий
+    const actionsDiv = document.querySelector('.actions-section');
     actionsDiv.innerHTML = '<h2>Действия:</h2>';
     const restBtn = document.createElement('button');
     restBtn.id = 'rest-btn';
@@ -118,6 +180,19 @@ function hideEvent() {
     exploreBtn.textContent = 'Исследовать';
     exploreBtn.addEventListener('click', explore);
     actionsDiv.appendChild(exploreBtn);
+    
+    // Добавляем кнопку "Создать базу", если все условия выполнены
+    if (gameState.flags.quest_food_found && 
+        gameState.flags.quest_medicine_found && 
+        gameState.flags.quest_shelter_found && 
+        gameState.flags.quest_crash_site_found && 
+        !gameState.flags.quest_base_established) {
+        const establishBaseBtn = document.createElement('button');
+        establishBaseBtn.id = 'establish-base-btn';
+        establishBaseBtn.textContent = 'Создать базу';
+        establishBaseBtn.addEventListener('click', establishBase);
+        actionsDiv.appendChild(establishBaseBtn);
+    }
 }
 
 function handleEventChoice(choiceIndex) {
@@ -171,10 +246,73 @@ function applyEventEffects(effects) {
                 delete gameState.inventory[effect.item]; // Удаляем предмет, если количество <= 0
             }
             addToLog(`Инвентарь: ${effect.item} ${effect.value > 0 ? '+' : ''}${effect.value}`);
+            
+            // Проверяем, не выполнил ли игрок задачи квеста
+            checkQuestProgress(effect.item);
+        } else if (effect.type === 'flag') {
+            gameState.flags[effect.flag] = effect.value;
+            addToLog(`Флаг установлен: ${effect.flag} = ${effect.value}`);
+            
+            // Проверяем, не выполнил ли игрок задачи квеста
+            if (effect.flag === 'quest_crash_site_found' && effect.value === true) {
+                addToLog("Вы нашли обломки корабля! Теперь вы можете превратить их в свою базу.", true);
+                updateUI(); // Обновляем UI, чтобы показать кнопку "Создать базу"
+            }
         }
     });
 }
 
+// --- Функции для работы с квестом ---
+function startQuest() {
+    if (!gameState.flags.quest_started) {
+        gameState.flags.quest_started = true;
+        addToLog("=== СТАРТОВЫЙ КВЕСТ: Выживание ===", true);
+        addToLog("Вам нужно найти еду, лекарства, убежище и обломки корабля.", true);
+        updateUI();
+    }
+}
+
+function checkQuestProgress(itemName) {
+    if (!gameState.flags.quest_started) return;
+    
+    // Проверка на еду
+    if (!gameState.flags.quest_food_found && 
+        (itemName.includes("Паста") || itemName.includes("Растения") || itemName.includes("Мясо"))) {
+        gameState.flags.quest_food_found = true;
+        addToLog("✓ Задача выполнена: Найти еду", true);
+    }
+    
+    // Проверка на лекарства
+    if (!gameState.flags.quest_medicine_found && 
+        (itemName.includes("Аптечка") || itemName.includes("Лекарства"))) {
+        gameState.flags.quest_medicine_found = true;
+        addToLog("✓ Задача выполнена: Найти лекарства", true);
+    }
+    
+    // Проверка на убежище (через флаг, а не предмет)
+    // Это будет обрабатываться в событиях
+    
+    // Проверка на обломки корабля (через флаг)
+    // Это будет обрабатываться в событиях
+    
+    updateUI();
+}
+
+function establishBase() {
+    if (gameState.flags.quest_food_found && 
+        gameState.flags.quest_medicine_found && 
+        gameState.flags.quest_shelter_found && 
+        gameState.flags.quest_crash_site_found && 
+        !gameState.flags.quest_base_established) {
+        
+        gameState.flags.quest_base_established = true;
+        gameState.flags.has_shelter = true; // Устанавливаем общий флаг убежища
+        addToLog("=== ВЫ СОЗДАЛИ СВОЮ БАЗУ! ===", true);
+        addToLog("Обломки корабля стали вашим новым домом. Вы установили сигнальное устройство и начали восстанавливать системы.", true);
+        updateUI();
+        hideEvent(); // На случай, если кнопка была показана во время события
+    }
+}
 
 // --- Игровая Логика (Действия) ---
 function rest() {
@@ -199,6 +337,11 @@ function rest() {
 }
 
 function explore() {
+    // Начинаем квест при первом исследовании
+    if (!gameState.flags.quest_started) {
+        startQuest();
+    }
+    
     // Сначала применяем стандартные эффекты исследования
     const fatigueIncrease = 5;
     const hungerIncrease = 3;
@@ -249,6 +392,8 @@ function explore() {
         } else {
             gameState.inventory[itemName] = quantity;
         }
+        // Проверяем прогресс квеста
+        checkQuestProgress(itemName);
     }
 
     addToLog(outcome.text);
@@ -305,6 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Инициализируем UI
     updateUI();
     addToLog("Спасательная капсула приземлилась. Вы один. Нужно выжить.");
+    addToLog("Нажмите 'Исследовать', чтобы начать свой путь.", true);
 
     // Запускаем игровой цикл (например, обновление раз в 5 секунд)
     gameInterval = setInterval(gameLoop, 5000); // 5000 мс = 5 секунд
