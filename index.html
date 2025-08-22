@@ -8,68 +8,76 @@
 </head>
 <body>
     <div id="game-container">
-        <h1>Alteret Doom - Выживание</h1>
+        <header>
+            <h1>Alteret Doom - Выживание</h1>
+        </header>
 
-        <!-- Статус-бары -->
-        <div class="status-section">
-            <h2>Состояние:</h2>
-            <div>
-                <label>Здоровье: </label>
-                <span id="health-value">100</span>%
-                <div class="status-bar">
-                    <div id="health-bar" class="bar health-bar" style="width: 100%;"></div>
-                </div>
-            </div>
-            <div>
-                <label>Голод: </label>
-                <span id="hunger-value">0</span>%
-                <div class="status-bar">
-                    <div id="hunger-bar" class="bar hunger-bar" style="width: 0%;"></div>
-                </div>
-            </div>
-            <div>
-                <label>Жажда: </label>
-                <span id="thirst-value">0</span>%
-                <div class="status-bar">
-                    <div id="thirst-bar" class="bar thirst-bar" style="width: 0%;"></div>
-                </div>
-            </div>
-             <div>
-                <label>Усталость: </label>
-                <span id="fatigue-value">0</span>%
-                <div class="status-bar">
-                    <div id="fatigue-bar" class="bar fatigue-bar" style="width: 0%;"></div>
-                </div>
-            </div>
-        </div>
+        <main class="game-grid">
+            <!-- Левая колонка: Статус и Инвентарь -->
+            <aside class="sidebar left-sidebar">
+                <section class="status-section panel">
+                    <h2>Состояние</h2>
+                    <div class="status-item">
+                        <label>Здоровье: <span id="health-value">100</span>%</label>
+                        <div class="status-bar">
+                            <div id="health-bar" class="bar health-bar" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <label>Голод: <span id="hunger-value">0</span>%</label>
+                        <div class="status-bar">
+                            <div id="hunger-bar" class="bar hunger-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <label>Жажда: <span id="thirst-value">0</span>%</label>
+                        <div class="status-bar">
+                            <div id="thirst-bar" class="bar thirst-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <label>Усталость: <span id="fatigue-value">0</span>%</label>
+                        <div class="status-bar">
+                            <div id="fatigue-bar" class="bar fatigue-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </section>
 
-        <!-- Инвентарь -->
-        <div class="inventory-section">
-            <h2>Инвентарь:</h2>
-            <ul id="inventory-list">
-                <!-- Предметы будут добавлены сюда скриптом -->
-            </ul>
-        </div>
+                <section class="inventory-section panel">
+                    <h2>Инвентарь</h2>
+                    <ul id="inventory-list">
+                        <!-- Предметы будут добавлены сюда скриптом -->
+                    </ul>
+                </section>
+            </aside>
 
-        <!-- Описание/События -->
-        <div class="description-section">
-            <h2>Ситуация:</h2>
-            <p id="description-text">Вы очнулись в спасательной капсуле после крушения корабля. Вокруг пусто, но вы чувствуете, что не один. Нужно выжить и найти способ подать сигнал о помощи.</p>
-        </div>
+            <!-- Центральная колонка: Основное описание и действия -->
+            <section class="main-content">
+                <section class="description-section panel">
+                    <h2>Ситуация</h2>
+                    <div id="description-text">
+                        <p>Вы очнулись в спасательной капсуле после крушения корабля. Вокруг пусто, но вы чувствуете, что не один. Нужно выжить и найти способ подать сигнал о помощи.</p>
+                    </div>
+                </section>
 
-        <!-- Действия -->
-        <div class="actions-section">
-            <h2>Действия:</h2>
-            <button id="rest-btn">Отдыхать</button>
-            <button id="explore-btn">Исследовать</button>
-            <!-- Другие кнопки действий будут добавлены позже -->
-        </div>
+                <section class="actions-section panel">
+                    <h2>Действия</h2>
+                    <div class="actions-buttons">
+                        <button id="rest-btn">Отдыхать</button>
+                        <button id="explore-btn">Исследовать</button>
+                        <!-- Другие кнопки действий будут добавлены позже -->
+                    </div>
+                </section>
+            </section>
 
-        <!-- Сообщения/Лог -->
-        <div class="log-section">
-            <h2>Лог:</h2>
-            <div id="game-log"></div>
-        </div>
+            <!-- Правая колонка: Лог -->
+            <aside class="sidebar right-sidebar">
+                <section class="log-section panel">
+                    <h2>Лог</h2>
+                    <div id="game-log"></div>
+                </section>
+            </aside>
+        </main>
     </div>
 
     <!-- ВАЖНО: Порядок подключения скриптов имеет значение -->
