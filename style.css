@@ -1,80 +1,277 @@
+/* style.css */
+
+/* --- Базовые стили --- */
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: 'Courier New', Courier, monospace;
-    background-color: #111;
+    background-color: #000;
     color: #0f0; /* Зеленый текст для стилизации под терминал */
     margin: 0;
-    padding: 20px;
+    padding: 0;
+    font-size: 16px; /* Базовый размер шрифта */
 }
 
+/* --- Контейнер игры --- */
 #game-container {
-    max-width: 800px;
-    margin: 0 auto;
-    border: 1px solid #0f0;
-    padding: 20px;
-    background-color: #000;
+    min-height: 100vh; /* Занимает всю высоту экрана */
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    background-color: #111;
 }
 
-h1, h2 {
-    color: #0f0;
+/* --- Заголовок --- */
+header {
+    text-align: center;
+    padding: 10px;
     border-bottom: 1px solid #0f0;
-    padding-bottom: 5px;
+    margin-bottom: 10px;
 }
 
-/* Статус-бары */
-.status-bar {
+header h1 {
+    margin: 0;
+    font-size: 1.5rem; /* Относительный размер */
+    color: #0f0;
+}
+
+/* --- Основная сетка --- */
+.game-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* По умолчанию одна колонка */
+    grid-template-areas:
+        "left-sidebar"
+        "main-content"
+        "right-sidebar";
+    gap: 10px;
+    flex-grow: 1; /* Занимает оставшееся пространство */
+    overflow: hidden; /* Предотвращает прокрутку всего grid */
+}
+
+/* --- Панель (общий стиль для секций) --- */
+.panel {
+    background-color: #001100;
+    border: 1px solid #0f0;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 3px; /* Немного скругления углов */
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.2); /* Легкая тень */
+}
+
+.panel h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #0f0;
+    font-size: 1.2rem; /* Относительный размер */
+    color: #0f0;
+}
+
+/* --- Боковые панели --- */
+.sidebar {
+    /* Общие стили для боковых панелей */
+}
+
+.left-sidebar {
+    grid-area: left-sidebar;
+}
+
+.right-sidebar {
+    grid-area: right-sidebar;
+}
+
+/* --- Левая боковая панель (Статус и Инвентарь) --- */
+.status-section .status-item {
+    margin-bottom: 10px;
+}
+
+.status-section .status-item label {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 0.9rem; /* Немного меньше основного текста */
+}
+
+.status-section .status-bar {
     width: 100%;
-    height: 20px;
+    height: 15px; /* Сделаем полоски немного меньше */
     background-color: #333;
     border: 1px solid #0f0;
-    margin-top: 5px;
     overflow: hidden;
+    border-radius: 2px; /* Немного скругления */
 }
 
-.bar {
+.status-section .bar {
     height: 100%;
     transition: width 0.3s ease-in-out;
 }
 
-.health-bar { background-color: #f33; } /* Красный */
-.hunger-bar { background-color: #ff0; } /* Желтый */
-.thirst-bar { background-color: #00f; } /* Синий */
-.fatigue-bar { background-color: #888; } /* Серый */
+/* Цвета полосок остаются те же */
+.health-bar { background-color: #f33; }
+.hunger-bar { background-color: #ff0; }
+.thirst-bar { background-color: #00f; }
+.fatigue-bar { background-color: #888; }
 
-/* Инвентарь */
 .inventory-section ul {
     list-style-type: none;
     padding: 0;
+    margin: 0;
+    max-height: 200px; /* Ограничиваем высоту */
+    overflow-y: auto; /* Добавляем прокрутку, если много предметов */
 }
 
 .inventory-section li {
-    background-color: #222;
-    margin: 5px 0;
+    background-color: #002200;
+    margin: 3px 0;
     padding: 5px;
-    border: 1px solid #0f0;
+    border: 1px solid #0a0;
+    border-radius: 2px;
+    font-size: 0.9rem;
 }
 
-/* Кнопки действий */
+/* --- Центральная колонка --- */
+.main-content {
+    grid-area: main-content;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Расстояние между секциями */
+}
+
+.description-section {
+    flex-grow: 1; /* Описание занимает доступное пространство */
+    display: flex;
+    flex-direction: column;
+}
+
+#description-text {
+    flex-grow: 1;
+    overflow-y: auto; /* Прокрутка внутри описания */
+    padding: 5px;
+    background-color: #000;
+    border: 1px solid #0a0;
+    border-radius: 2px;
+    font-size: 0.95rem; /* Немного меньше основного текста */
+    line-height: 1.4; /* Улучшает читаемость */
+}
+
+.actions-section .actions-buttons {
+    display: flex;
+    flex-wrap: wrap; /* Кнопки переносятся на новую строку при необходимости */
+    gap: 5px; /* Расстояние между кнопками */
+}
+
 .actions-section button {
     background-color: #002200;
     color: #0f0;
     border: 1px solid #0f0;
-    padding: 10px 15px;
-    margin: 5px;
+    padding: 8px 12px; /* Немного меньше отступы */
     cursor: pointer;
     font-family: inherit;
-    font-size: 1em;
+    font-size: 0.9rem; /* Размер шрифта кнопок */
+    border-radius: 2px; /* Немного скругления */
+    flex: 1 1 auto; /* Кнопки растягиваются, но могут сжиматься */
+    min-width: 120px; /* Минимальная ширина кнопки */
 }
 
 .actions-section button:hover {
     background-color: #004400;
 }
 
-/* Лог */
+.actions-section button:disabled {
+    background-color: #222;
+    color: #555;
+    border-color: #555;
+    cursor: not-allowed;
+}
+
+/* --- Правая боковая панель (Лог) --- */
 .log-section {
-    height: 150px;
+    grid-area: right-sidebar;
+    display: flex;
+    flex-direction: column;
+}
+
+.log-section #game-log {
+    flex-grow: 1;
+    height: 200px; /* Фиксированная высота по умолчанию */
     overflow-y: auto;
     border: 1px solid #0f0;
-    padding: 10px;
-    background-color: #001100;
-    margin-top: 20px;
+    padding: 8px;
+    background-color: #000;
+    font-family: inherit;
+    font-size: 0.85rem; /* Меньше основного текста */
+    line-height: 1.3;
+}
+
+.log-section #game-log div {
+    margin-bottom: 3px;
+    word-break: break-word; /* Перенос слов */
+}
+
+
+/* --- Адаптивность (Media Queries) --- */
+
+/* Для экранов шире 768px */
+@media (min-width: 768px) {
+    body {
+        font-size: 17px;
+    }
+
+    #game-container {
+        padding: 15px;
+    }
+
+    header h1 {
+        font-size: 1.8rem;
+    }
+
+    .game-grid {
+        grid-template-columns: 1fr 2fr 1fr; /* 3 колонки */
+        grid-template-areas:
+            "left-sidebar main-content right-sidebar";
+    }
+
+    .panel {
+        margin-bottom: 0; /* Убираем нижний margin, так как есть gap */
+    }
+
+    .log-section #game-log {
+        height: auto; /* Высота по содержимому */
+        min-height: 300px; /* Минимальная высота */
+        flex-grow: 1; /* Занимает доступное пространство */
+    }
+}
+
+/* Для экранов шире 1024px */
+@media (min-width: 1024px) {
+    body {
+        font-size: 18px;
+    }
+
+    #game-container {
+        padding: 20px;
+        max-width: 1400px; /* Ограничиваем максимальную ширину на больших экранах */
+        margin: 0 auto; /* Центрируем */
+    }
+
+    header h1 {
+        font-size: 2rem;
+    }
+
+     .game-grid {
+        /* Можно немного скорректировать соотношение колонок */
+        grid-template-columns: 1fr 2.5fr 1fr;
+    }
+
+    .actions-section button {
+        padding: 10px 15px;
+        font-size: 1rem;
+        min-width: 140px;
+    }
+
+    .log-section #game-log {
+        font-size: 0.9rem;
+        min-height: 400px;
+    }
 }
