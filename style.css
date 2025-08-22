@@ -58,6 +58,8 @@ header h1 {
     margin-bottom: 10px;
     border-radius: 3px; /* Немного скругления углов */
     box-shadow: 0 0 5px rgba(0, 255, 0, 0.2); /* Легкая тень */
+    display: flex;
+    flex-direction: column;
 }
 
 .panel h2 {
@@ -67,6 +69,7 @@ header h1 {
     border-bottom: 1px solid #0f0;
     font-size: 1.2rem; /* Относительный размер */
     color: #0f0;
+    flex-shrink: 0; /* Заголовок не сжимается */
 }
 
 /* --- Боковые панели --- */
@@ -117,8 +120,11 @@ header h1 {
     list-style-type: none;
     padding: 0;
     margin: 0;
-    max-height: 200px; /* Ограничиваем высоту */
-    overflow-y: auto; /* Добавляем прокрутку, если много предметов */
+    /* Убираем фиксированную высоту и полную прокрутку отсюда */
+    /* max-height: 200px; */
+    /* overflow-y: auto; */
+    flex-grow: 1; /* Занимает доступное пространство внутри панели */
+    overflow-y: auto; /* Прокрутка, если нужно */
 }
 
 .inventory-section li {
@@ -159,6 +165,7 @@ header h1 {
     display: flex;
     flex-wrap: wrap; /* Кнопки переносятся на новую строку при необходимости */
     gap: 5px; /* Расстояние между кнопками */
+    flex-shrink: 0; /* Кнопки не сжимаются */
 }
 
 .actions-section button {
@@ -190,23 +197,30 @@ header h1 {
     grid-area: right-sidebar;
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* Ключ для предотвращения роста за пределы сетки */
 }
 
 .log-section #game-log {
-    flex-grow: 1;
-    height: 200px; /* Фиксированная высота по умолчанию */
-    overflow-y: auto;
+    /* Ключевые изменения здесь для фиксированной/прокручиваемой области */
+    flex-grow: 1; /* Занимает доступное пространство внутри .log-section */
+    height: 0; /* Хитрость: позволяет flex-grow работать корректно */
+
+    /* Обязательные свойства для прокрутки */
+    overflow-y: auto; /* Добавляет вертикальную прокрутку при необходимости */
+    overflow-x: hidden; /* Скрывает горизонтальную прокрутку */
+
+    /* Стили оформления */
     border: 1px solid #0f0;
     padding: 8px;
     background-color: #000;
     font-family: inherit;
-    font-size: 0.85rem; /* Меньше основного текста */
+    font-size: 0.85rem;
     line-height: 1.3;
+    word-break: break-word; /* Перенос слов */
 }
 
 .log-section #game-log div {
     margin-bottom: 3px;
-    word-break: break-word; /* Перенос слов */
 }
 
 
@@ -236,11 +250,14 @@ header h1 {
         margin-bottom: 0; /* Убираем нижний margin, так как есть gap */
     }
 
+    /* Убираем height: auto и min-height из медиа-запроса, полагаемся на flexbox */
+    /*
     .log-section #game-log {
-        height: auto; /* Высота по содержимому */
-        min-height: 300px; /* Минимальная высота */
-        flex-grow: 1; /* Занимает доступное пространство */
+        height: auto;
+        min-height: 300px;
+        flex-grow: 1;
     }
+    */
 }
 
 /* Для экранов шире 1024px */
@@ -270,8 +287,11 @@ header h1 {
         min-width: 140px;
     }
 
+    /* Убираем min-height из медиа-запроса, полагаемся на flexbox */
+    /*
     .log-section #game-log {
         font-size: 0.9rem;
         min-height: 400px;
     }
+    */
 }
