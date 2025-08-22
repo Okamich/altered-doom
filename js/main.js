@@ -129,14 +129,14 @@ function handleEventChoice(choiceIndex) {
         return;
     }
 
-    // Применяем эффекты выбора
-    if (choice.effects && choice.effects.length > 0) {
-        applyEventEffects(choice.effects);
-    }
-
-    // Добавляем результат выбора в лог
+    // Сначала добавляем результат выбора в лог
     if (choice.outcome) {
         addToLog(choice.outcome, true);
+    }
+
+    // Затем применяем эффекты выбора
+    if (choice.effects && choice.effects.length > 0) {
+        applyEventEffects(choice.effects);
     }
 
     // Скрываем событие и возвращаем обычный UI
