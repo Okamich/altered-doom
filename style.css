@@ -200,17 +200,37 @@ header h1 {
 }
 
 /* --- Правая боковая панель (Лог) --- */
+/* --- НОВАЯ ЛОГИКА ДЛЯ ЛОГА --- */
 .log-section {
     grid-area: right-sidebar;
+    /* Убираем display: flex и flex-direction: column */
+    /* Заставляем .log-section занимать ту же высоту, что и соседние элементы в grid */
+    /* min-height: 0; */ /* Убираем это */
+    /* Добавляем стили для имитации панели */
+    background-color: #001100;
+    border: 1px solid #0f0;
+    padding: 10px;
+    border-radius: 3px;
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.2);
     display: flex;
     flex-direction: column;
-    min-height: 0; /* Критично: позволяет внутреннему flex-контенту правильно управлять размером */
+}
+
+.log-section h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #0f0;
+    font-size: 1.2rem;
+    color: #0f0;
+    flex-shrink: 0;
 }
 
 .log-section #game-log {
-    /* Ключевые изменения здесь для фиксированной/прокручиваемой области */
-    flex-grow: 1; /* Занимает доступное пространство внутри .log-section */
-    /* УДАЛЕН height: 0; */
+    /* --- КЛЮЧЕВЫЕ ИЗМЕНЕНИЯ --- */
+    /* Заставляем #game-log заполнять оставшееся пространство внутри .log-section */
+    flex-grow: 1;
+    /* Убираем height: 0; */
 
     /* Обязательные свойства для прокрутки */
     overflow-y: auto; /* Добавляет вертикальную прокрутку при необходимости */
@@ -224,8 +244,12 @@ header h1 {
     font-size: 0.85rem;
     line-height: 1.3;
     word-break: break-word; /* Перенос слов */
-    min-height: 100px; /* Минимальная высота, чтобы не сжимался слишком сильно */
+    /* --- УДАЛЯЕМ min-height, чтобы высота была гибкой --- */
+    /* min-height: 100px; */
+    /* --- Добавляем min-height для минимального отображения --- */
+    min-height: 150px; /* Минимальная высота для отображения прокрутки */
 }
+
 
 .log-section #game-log div {
     margin-bottom: 3px;
@@ -248,22 +272,34 @@ header h1 {
         font-size: 1.8rem;
     }
 
+    /* --- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ ДЛЯ ДЕСКТОПА --- */
     .game-grid {
+        /* Используем align-items: start, чтобы колонки не растягивались по высоте */
+        align-items: start;
         grid-template-columns: 1fr 2fr 1fr; /* 3 колонки */
         grid-template-areas:
             "left-sidebar main-content right-sidebar";
     }
+    /* --- КОНЕЦ ИЗМЕНЕНИЯ --- */
 
     .panel {
         margin-bottom: 0; /* Убираем нижний margin, так как есть gap */
     }
 
+    /* Убираем отдельные min-height для лога в медиа-запросах, полагаемся на flex-grow */
+    /*
     .log-section #game-log {
-        min-height: 150px; /* Увеличиваем минимальную высоту на больших экранах */
+        min-height: 150px;
     }
+    */
 
     .inventory-section ul {
         min-height: 120px; /* Увеличиваем минимальную высоту инвентаря */
+    }
+    
+    /* Убедимся, что .log-section ведет себя как панель на десктопе */
+    .log-section {
+        margin-bottom: 0;
     }
 }
 
@@ -285,6 +321,7 @@ header h1 {
 
      .game-grid {
         grid-template-columns: 1fr 2.5fr 1fr;
+        /* align-items: start; уже задано выше */
     }
 
     .actions-section button {
@@ -293,16 +330,24 @@ header h1 {
         min-width: 140px;
     }
 
+    /* Убираем min-height из медиа-запроса для лога */
+    /*
     .log-section #game-log {
         font-size: 0.9rem;
-        min-height: 200px; /* Увеличиваем минимальную высоту на больших экранах */
+        min-height: 200px;
     }
-
+    */
+    
     .inventory-section ul {
         min-height: 150px; /* Увеличиваем минимальную высоту инвентаря */
     }
     
     #description-text {
         min-height: 150px; /* Увеличиваем минимальную высоту описания */
+    }
+    
+    /* Минимальная высота для лога на больших экранах */
+    .log-section #game-log {
+        min-height: 200px;
     }
 }
